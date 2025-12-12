@@ -1,13 +1,15 @@
 // serviceWorker.js
 const CACHE_NAME = "v1.0.8";
 const CACHE_ASSETS = [
+  "./",
   "./index.html",
-  "./images/icon1.png",
-  "manifest.json"
+  "./game.js",
+  "./manifest.json",
+  "./images/icon1.png"
 ];
 
 // Kurulum (Install)
-self.addEventListener("install", () => {
+self.addEventListener("install", (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(CACHE_ASSETS);

@@ -6,6 +6,11 @@
 
 <meta charset="UTF-8">
 
+    <!-- Make mobile layout scale correctly -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#fff890">
+    <link rel="manifest" href="manifest.json">
+
 <title>LET'S TAKE THE ATTENDANCE</title>
 
 <style>
@@ -44,7 +49,7 @@
 
         box-shadow: 0 0 10px rgba(0,0,0,0.1);
 
-        width: 330px;
+    width: min(92vw, 360px);
 
         text-align: center;
 
@@ -104,7 +109,7 @@
 
         margin-top: 20px;
 
-        width: 350px;
+    width: min(94vw, 360px);
 
         line-height: 1.5;
 
@@ -143,6 +148,20 @@
 <body>
 
 <h1>LET'S TAKE THE ATTENDANCE</h1>
+
+<style>
+/* Additional responsive tweaks for small screens */
+#leaderboardContainer { width: min(94vw, 360px); }
+@media (max-width: 420px) {
+    body { margin-top: 12px; }
+    #randomNumber { font-size: 32px; }
+    #timeDisplay { font-size: 20px; }
+    button { padding: 12px 20px; font-size: 18px; }
+    input { width: 80%; font-size: 18px; }
+    #summary { width: min(94vw, 360px); }
+    #gameContainer { padding: 12px; }
+}
+</style>
 
 
 
@@ -211,6 +230,18 @@
 </div>
 
 </body>
+
+<!-- Service worker registration (works on https or localhost) -->
+<script>
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js')
+            .then(reg => console.log('ServiceWorker registered', reg))
+            .catch(err => console.warn('ServiceWorker registration failed', err));
+    });
+}
+</script>
+
 <script type="module" src="game.js"></script>
 </html>
 
