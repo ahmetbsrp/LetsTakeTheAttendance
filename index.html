@@ -173,13 +173,18 @@
 
     • A random number will appear, type it correctly.<br>
 
-    • Correct answers give you points equal to the number of digits, as well as the same amount of seconds.<br>
+    • Correct answers give you points equal to the number of digits, as well as refilling your time.<br>
 
-    • Wrong answers take points from you equal to the number of digits.<br>
+    • Wrong answers takes time from you depends on the number of digits.<br>
 
     • Each digit length is asked <b>5 times</b>, then the digit count increases.<br>
 
-    • The game continues forever. Good luck!
+    • Upon completing 10 digit numbers, digit length is reset to 1 and timer gets faster!. <br>
+
+    • Try to get the highest score possible! The game continues forever until you quit. <br>
+    
+    Good luck! <br>
+   
 
     <div id="bestScoreDisplay" style="margin-top:10px; font-size:20px;">
     Highest Score: 0
@@ -190,10 +195,12 @@
 
 <button id="startBtn">Start Game</button>
 
+
 <div id="gameContainer">
+  
 
     <div id="timeDisplay">Time: 10</div>
-
+ 
     <div id="pointDisplay">Point: 0</div>
 
     <div id="randomNumber"></div>
@@ -203,7 +210,7 @@
     <br>
 
     <button id="submitBtn">Submit</button>
-
+    <button id="quitBtn" style="background:#ff4c4c; color:#fff; margin-left:8px;">Quit Game</button>
 </div>
 
 <div id="notifyContainer" style="
@@ -219,13 +226,17 @@
 
 <!-- Leaderboard / submit score UI -->
 <div id="leaderboardContainer" style="margin-top:20px; width:340px; text-align:center;">
-    <div style="margin-bottom:8px;">Player ID (exactly 9 digits):</div>
+    <div style="margin-bottom:8px;">Player ID (9 digits):</div>
     <input id="playerName" placeholder="123456789" maxlength="9" pattern="\d{9}" inputmode="numeric" style="width:200px; margin-bottom:8px;">
     <div>
-        <button id="submitScoreBtn">Submit Score</button>
-        <button id="refreshBoardBtn" style="background:#333; color:#fff; margin-left:8px;">Refresh Leaderboard</button>
+        <button id="submitScoreBtn">Submit Highest Score</button>
+    <button id="refreshBoardBtn" 
+        style="background:#333; color:#fff; margin-left:8px; margin-top:6px;">
+  Refresh Leaderboard
+</button>
+
     </div>
-    <h3 style="margin:12px 0 6px 0;">Leaderboard (Top 5)</h3>
+    <h3 style="margin:12px 0 6px 0;">Highest Score Leaderboard</h3>
     <div id="leaderboard" style="background:#fff; border-radius:8px; padding:10px; box-shadow:0 0 6px rgba(0,0,0,0.08); min-height:60px;"></div>
 </div>
 

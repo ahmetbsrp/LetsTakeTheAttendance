@@ -1,5 +1,5 @@
 // serviceWorker.js
-const CACHE_NAME = "v1.0.8";
+const CACHE_NAME = "v2";
 const CACHE_ASSETS = [
   "./",
   "./index.html",

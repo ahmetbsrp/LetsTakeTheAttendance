@@ -17,7 +17,7 @@ let countForDigit = 0; // how many times current digit length has been asked
 
 let timer;
 
-
+let countSpeed = 100; // initial timer speed in ms
 
 const timeDisplay = document.getElementById("timeDisplay");
 
@@ -38,6 +38,7 @@ const leaderboardContainer = document.getElementById("leaderboardContainer");
     console.log('Game init running');
 
 document.getElementById("startBtn").onclick = startGame;
+document.getElementById("quitBtn").onclick = resetGame;
 
 document.getElementById("submitBtn").onclick = checkInput;
 
@@ -97,20 +98,13 @@ function startTimer() {
 
         }
 
-    }, 100);
+    }, countSpeed);
 
 }
 
 function updateTime() {
 
-
-
-    if (time > maxtime) {
-        time = maxtime;
-    }
-
     timeDisplay.textContent = "Time: " + time;
-
 }
 
 function updatePoint() {
@@ -122,11 +116,6 @@ function updatePoint() {
         document.getElementById("bestScoreDisplay").textContent = "Highest Score: " + highestPoint;
     }
 
-    if (point < 0) {
-
-          resetGame();
-
-    } 
 }
 
 function randomDigits(n) {
@@ -157,14 +146,17 @@ function checkInput() {
 
     if (value === currentNumber) {
 
+        time = maxtime;
+        time = Math.round(time * 10) / 10;
         point += digitLength; 
-        time += digitLength;
         countForDigit++;
+       
 
         notify("Attendance given!", "success");
     } else {
 
-        point -= digitLength; 
+        time -= time / maxtime * 2; // penalize wrong answer
+        time = Math.round(time * 10) / 10;
 
          if (point > 0) {
 
@@ -184,9 +176,18 @@ function checkInput() {
     if (countForDigit === 5) {
 
         digitLength++;
-        maxtime += digitLength;
+        maxtime += digitLength/6;
         countForDigit = 0;
 
+    }
+    if (digitLength > 10) {
+        digitLength = 1;
+        maxtime = 10;
+        time = maxtime;
+        time = Math.round(time * 10) / 10;
+        countSpeed *= 0.85; // increase timer speed by reducing interval
+        clearInterval(timer);
+        startTimer();
     }
 
     newNumber();
@@ -208,7 +209,7 @@ async function submitScore(name, score) {
     if (!name) name = '';
     const idStr = String(name).trim();
     if (!/^\d{9}$/.test(idStr)) {
-        notify('Student ID must be exactly 9 digits (0-9).', 'warn');
+        notify('Player ID must be exactly 9 digits (0-9).', 'warn');
         return;
     }
     name = idStr; // normalize
@@ -289,7 +290,7 @@ async function fetchTopScores() {
     try {
     const mod = await import('./firebaseinit.js');
     const { db, collection, getDocs, query, orderBy, limit } = mod;
-    const q = query(collection(db, 'leaderboard'), orderBy('score', 'desc'), limit(5));
+    const q = query(collection(db, 'leaderboard'), orderBy('score', 'desc'), limit(10));
     const snap = await getDocs(q);
         if (snap.empty) {
             leaderboardDiv.innerHTML = '<div>No scores yet</div>';
@@ -338,10 +339,10 @@ function notify(message, type = "success") {
 
     document.getElementById("notifyContainer").appendChild(box);
 
-    // 3.2 saniye sonra DOM'dan sil
+    // 1.5 saniye sonra DOM'dan sil
     setTimeout(() => {
         box.remove();
-    }, 3200);
+    }, 1500);
 }
 
 }
