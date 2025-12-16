@@ -7,7 +7,7 @@ let point = 0;
 
 let highestPoint = Number(localStorage.getItem("highestPoint")) || 0;
 
-document.getElementById("bestScoreDisplay").textContent = "Highest Score: " + highestPoint;
+document.getElementById("bestScoreDisplay").textContent = "Your Highest Score: " + highestPoint;
 
 let currentNumber = "";
 
@@ -62,7 +62,9 @@ function resetGame() {
     notify("Game Over! Your final score: " + point, "error");
 
     // değerleri sıfırla
-    time = 10;
+    maxtime = 10;
+    time = maxtime;
+    countSpeed = 100;
     point = 0;
     digitLength = 1;
     countForDigit = 0;
@@ -113,7 +115,7 @@ function updatePoint() {
     if (point > highestPoint) {
         highestPoint = point;
         localStorage.setItem("highestPoint", highestPoint);
-        document.getElementById("bestScoreDisplay").textContent = "Highest Score: " + highestPoint;
+        document.getElementById("bestScoreDisplay").textContent = "Your Highest Score: " + highestPoint;
     }
 
 }

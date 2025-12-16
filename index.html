@@ -10,6 +10,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#fff890">
     <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 
 <title>LET'S TAKE THE ATTENDANCE</title>
 
@@ -19,7 +20,7 @@
 
         font-family: Arial, sans-serif;
 
-        background: #f5f5f5;
+        background:linear-gradient(180deg,#1c1192 0%, #90b0ff 100%);
 
         display: flex;
 
@@ -49,6 +50,8 @@
 
         box-shadow: 0 0 10px rgba(0,0,0,0.1);
 
+        background-color: #061e65;
+
     width: min(92vw, 360px);
 
         text-align: center;
@@ -72,6 +75,14 @@
         font-size: 22px;
 
         margin-bottom: 15px;
+
+    }
+
+    #startBtn {
+
+        margin-top: 25px;
+
+        font-size: 25px;
 
     }
 
@@ -109,9 +120,11 @@
 
         margin-top: 20px;
 
-    width: min(94vw, 360px);
+        width: min(94vw, 640px);
 
         line-height: 1.5;
+
+        padding: 12px 14px;
 
     }
 
@@ -126,6 +139,64 @@
     transform: translateY(20px);
     animation: notifyIn 0.25s forwards, notifyOut 0.4s forwards 2.8s;
 }
+
+/* Retro 8-bit theme */
+body.retro {
+    background: linear-gradient(180deg,#02040a 0%, #061028 100%);
+    color: #cfe7a8;
+}
+
+/* CRT scanline overlay */
+body.retro::after{
+    content: "";
+    position: fixed; inset:0; pointer-events:none; mix-blend-mode:overlay;
+    background-image: repeating-linear-gradient(rgba(255,255,255,0.02) 0 1px, transparent 1px 3px);
+}
+
+h1{ font-family:'Press Start 2P', monospace; color:#10b7fe; text-shadow: 0 0 8px rgba(255, 198, 123, 0.12), 2px 2px 0 #061; font-size:18px; }
+
+#gameContainer.retro, #gameContainer { background: linear-gradient(180deg,#061227 0%, #091a2d 100%); border:6px solid #081118; box-shadow: 0 0 0 4px rgba(0,0,0,0.6), 0 8px 20px rgba(0,0,0,0.6); color:#dfffcf; }
+
+#randomNumber{ font-family:'Press Start 2P', monospace; font-size:48px; color:#ffffff; text-shadow: 0 0 10px rgba(71,255,138,0.15); image-rendering: pixelated; }
+
+#timeDisplay, #pointDisplay{ font-family:monospace; font-weight:700; color:#fff; background:#001018; padding:6px 10px; border-radius:6px; display:inline-block; margin:6px 6px; border:2px solid #07303a; }
+
+button{ font-family: 'Press Start 2P', monospace; background:linear-gradient(#9bd5ff,#dab5ff); border:4px solid #222; box-shadow: 0 6px 0 #111; color:#040404; }
+button:active{ transform:translateY(3px); box-shadow:0 3px 0 #111 inset; }
+
+input{ background:#000; color:#7fff9e; border:3px solid #043; padding:10px; font-family:monospace; }
+
+#leaderboard{ font-family:monospace; background:linear-gradient(#071118,#051019); color:#0b1587; border:3px solid #082326; }
+
+.notifyBox{ font-family:monospace; font-size:12px; border:2px solid #052; background:linear-gradient(#0b2,#093); box-shadow:none; }
+
+/* small pixel-ish corner accents */
+#gameContainer:before{ content:''; position:absolute; left:12px; top:12px; width:10px; height:10px; background:#7bffb2; box-shadow:18px 0 #7bffb2, 0 18px #7bffb2; opacity:0.12; }
+
+/* apply retro body style by default */
+body { transform: none; }
+
+/* Retro styling for the summary panel */
+#summary {
+    font-family: 'Press Start 2P', monospace;
+    background: linear-gradient(180deg,#051721 0%, #071827 100%);
+    color: #78e3fe;
+    border: 5px solid #073a2f;
+    padding: 14px 16px;
+    border-radius: 6px;
+    box-shadow: 0 8px 0 rgba(0,0,0,0.6), inset 0 2px 0 rgba(255,255,255,0.02);
+    text-align: center;
+    position: relative;
+    font-size: 12px;
+}
+
+#summary strong { color: #75a3de; display:block; margin-bottom:6px; font-size:20px; }
+
+#summary:before, #summary:after{
+    content:''; position:absolute; width:8px; height:8px; background:#7bffb2; opacity:0.08;
+}
+#summary:before{ left:8px; top:8px; box-shadow: 14px 0 #937bff, 0 14px #937bffa4; }
+#summary:after{ right:8px; bottom:8px; box-shadow: -14px 0 #937bff, 0 -14px #937bffa4; }
 
 @keyframes notifyIn {
     to {
@@ -161,13 +232,18 @@
     #summary { width: min(94vw, 360px); }
     #gameContainer { padding: 12px; }
 }
+
+/* Larger screen tweaks for summary */
+@media (min-width: 700px) {
+    #summary { width: min(90vw, 640px); padding: 20px 24px; font-size: 14px; }
+}
 </style>
 
 
 
 <div id="summary">
 
-    <strong>Game Rules:</strong><br>
+    <strong>Game Rules</strong><br>
 
     • You start with <b>10 seconds</b> at the beginning.<br>
 
@@ -185,9 +261,8 @@
     
     Good luck! <br>
    
-
     <div id="bestScoreDisplay" style="margin-top:10px; font-size:20px;">
-    Highest Score: 0
+    Your Highest Score: 0
 </div>
 
 
@@ -210,7 +285,7 @@
     <br>
 
     <button id="submitBtn">Submit</button>
-    <button id="quitBtn" style="background:#ff4c4c; color:#fff; margin-left:8px;">Quit Game</button>
+    <button id="quitBtn" style="background:linear-gradient(180deg,#ff1515 0%, #ff9595 100%); color:#fff; margin-left:8px;">Quit Game</button>
 </div>
 
 <div id="notifyContainer" style="
@@ -231,7 +306,7 @@
     <div>
         <button id="submitScoreBtn">Submit Highest Score</button>
     <button id="refreshBoardBtn" 
-        style="background:#333; color:#fff; margin-left:8px; margin-top:6px;">
+        style="background:#333; color:#fff; margin-top:8px;">
   Refresh Leaderboard
 </button>
 
@@ -239,6 +314,8 @@
     <h3 style="margin:12px 0 6px 0;">Highest Score Leaderboard</h3>
     <div id="leaderboard" style="background:#fff; border-radius:8px; padding:10px; box-shadow:0 0 6px rgba(0,0,0,0.08); min-height:60px;"></div>
 </div>
+<div style="margin-top:20px; font-size:12px; color:#666; text-align:center; max-width:340px;">
+Version 2.0.2<br>
 
 </body>
 

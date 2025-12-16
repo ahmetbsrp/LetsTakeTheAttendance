@@ -1,9 +1,10 @@
 // serviceWorker.js
-const CACHE_NAME = "v2";
+const CACHE_NAME = "2.0.2";
 const CACHE_ASSETS = [
   "./",
-  "./index.html",
   "./game.js",
+  "./firebaseinit.js",
+  "./service-worker.js",
   "./manifest.json",
   "./images/icon1.png"
 ];
@@ -31,6 +32,7 @@ self.addEventListener("activate", (e) => {
       );
     })
   );
+  return self.clients.claim();
 });
 
 // Fetch
