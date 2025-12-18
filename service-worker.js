@@ -1,5 +1,5 @@
 // serviceWorker.js
-const CACHE_NAME = "2.0.2";
+const CACHE_NAME = "2.3";
 const CACHE_ASSETS = [
   "./",
   "./game.js",
