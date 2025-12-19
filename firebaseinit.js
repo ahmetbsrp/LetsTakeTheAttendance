@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, getDocs, collection, query, orderBy, limit, addDoc, where, deleteDoc }
+import { getFirestore, doc, setDoc, getDoc, getDocs, collection, query, orderBy, limit, addDoc, where, deleteDoc, updateDoc }
   from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -17,4 +17,5 @@ export const db = getFirestore(app);
 
 // Re-export frequently used Firestore helpers so other modules can import them
 // Re-export helpers used by other modules so they share the same Firestore instance
-export { collection, addDoc, getDocs, query, orderBy, limit, where, deleteDoc, doc };
+// Re-export updateDoc so other modules can perform document updates
+export { collection, addDoc, getDocs, query, orderBy, limit, where, deleteDoc, doc, updateDoc };

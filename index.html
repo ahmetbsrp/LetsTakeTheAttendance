@@ -20,7 +20,7 @@
 
         font-family: Arial, sans-serif;
 
-        background:linear-gradient(180deg,#1c1192 0%, #90b0ff 100%);
+        background:linear-gradient(180deg,#177aeb 0%,#f0f0f0 50%, #ff97ac 100%);
 
         display: flex;
 
@@ -153,7 +153,7 @@ body.retro::after{
     background-image: repeating-linear-gradient(rgba(255,255,255,0.02) 0 1px, transparent 1px 3px);
 }
 
-h1{ font-family:'Press Start 2P', monospace; color:#10b7fe; text-shadow: 0 0 8px rgba(255, 198, 123, 0.12), 2px 2px 0 #061; font-size:18px; }
+h1{ font-family:'Press Start 2P', monospace; color:#2d00c1; text-shadow: 0 0 8px rgba(255, 198, 123, 0.12), 2px 2px 0 rgb(54, 94, 255); font-size:18px; }
 
 #gameContainer.retro, #gameContainer { background: linear-gradient(180deg,#061227 0%, #091a2d 100%); border:6px solid #081118; box-shadow: 0 0 0 4px rgba(0,0,0,0.6), 0 8px 20px rgba(0,0,0,0.6); color:#dfffcf; }
 
@@ -161,12 +161,30 @@ h1{ font-family:'Press Start 2P', monospace; color:#10b7fe; text-shadow: 0 0 8px
 
 #timeDisplay, #pointDisplay{ font-family:monospace; font-weight:700; color:#fff; background:#001018; padding:6px 10px; border-radius:6px; display:inline-block; margin:6px 6px; border:2px solid #07303a; }
 
-button{ font-family: 'Press Start 2P', monospace; background:linear-gradient(#9bd5ff,#dab5ff); border:4px solid #222; box-shadow: 0 6px 0 #111; color:#040404; }
+button{ font-family: 'Press Start 2P', monospace; background:linear-gradient(#9bd5ff,#ffb5b5); border:4px solid #222; box-shadow: 0 6px 0 #111; color:#040404; }
 button:active{ transform:translateY(3px); box-shadow:0 3px 0 #111 inset; }
 
 input{ background:#000; color:#7fff9e; border:3px solid #043; padding:10px; font-family:monospace; }
 
-#leaderboard{ font-family:monospace; background:linear-gradient(#071118,#051019); color:#0b1587; border:3px solid #082326; }
+#leaderboard{ font-family:monospace; background:linear-gradient(#071118,#051019); color:#e01d64; border:3px solid #082326; }
+
+/* UID visual style in leaderboard */
+#leaderboard li .uid { color: #965478; opacity: 0.9; margin-left:6px; font-size:0.9em; }
+/* Device label in leaderboard */
+#leaderboard li .device { color: #c71d1d; opacity: 0.95; margin-right:6px; font-size:0.9em; }
+
+#leaderboard li .score {
+    color: #c71d1d;
+    font-weight: 700;
+    background: linear-gradient(90deg,#81abff 0%,#ffffff 100%);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    display: inline-block;
+    margin-left: 6px;
+}
+/*chane "highestscoreleaderboard" title color*/
+#leaderboardContainer h1 { color: #ffb5b5; text-shadow: 0 0 8px rgba(129, 171, 255, 0.2); }
 
 .notifyBox{ font-family:monospace; font-size:12px; border:2px solid #052; background:linear-gradient(#0b2,#093); box-shadow:none; }
 
@@ -180,7 +198,7 @@ body { transform: none; }
 #summary {
     font-family: 'Press Start 2P', monospace;
     background: linear-gradient(180deg,#051721 0%, #071827 100%);
-    color: #78e3fe;
+    color: #27b5d8;
     border: 5px solid #073a2f;
     padding: 14px 16px;
     border-radius: 6px;
@@ -255,7 +273,7 @@ body { transform: none; }
 
     • Each digit length is asked <b>5 times</b>, then the digit count increases.<br>
 
-    • Upon completing 10 digit numbers, digit length is reset to 1 and timer gets faster!. <br>
+    • Upon completing 8-digit numbers (every 180 points), digit length is reset to 1 and timer gets faster!. <br>
 
     • Try to get the highest score possible! The game continues forever until you quit. <br>
     
@@ -299,35 +317,98 @@ body { transform: none; }
     z-index: 9999;
 "></div>
 
-<!-- Leaderboard / submit score UI -->
+<!-- Tabbed Leaderboard / Auth UI -->
 <div id="leaderboardContainer" style="margin-top:20px; width:340px; text-align:center;">
-    <div style="margin-bottom:8px;">Player ID (9 digits):</div>
-    <input id="playerName" placeholder="123456789" maxlength="9" pattern="\d{9}" inputmode="numeric" style="width:200px; margin-bottom:8px;">
-    <div>
-        <button id="submitScoreBtn">Submit Highest Score</button>
-    <button id="refreshBoardBtn" 
-        style="background:#333; color:#fff; margin-top:8px;">
-  Refresh Leaderboard
-</button>
-
+    <div class="tabs" style="display:flex; gap:6px; justify-content:center; margin-bottom:10px;">
+        <button id="tabSign" class="tabBtn">Sign Up</button>
+        <button id="tabLogin" class="tabBtn">Log In</button>
+        <button id="tabBoard" class="tabBtn active">Leaderboard</button>
     </div>
-    <h3 style="margin:12px 0 6px 0;">Highest Score Leaderboard</h3>
-    <div id="leaderboard" style="background:#fff; border-radius:8px; padding:10px; box-shadow:0 0 6px rgba(0,0,0,0.08); min-height:60px;"></div>
+
+    <div id="panelSign" class="tabPanel" style="display:none;">
+        <div style="margin-bottom:8px;">Sign Up (enter 9-digit Player ID):</div>
+        <input id="playerName" placeholder="123456789" maxlength="9" pattern="\d{9}" inputmode="numeric" style="width:200px; margin-bottom:8px;">
+        <div>
+            <button id="signUpBtn">Sign Up (Create new UID)</button>
+            <span class="generatedUidDisplay" aria-live="polite" role="status" style="display:block; margin-top:8px; font-size:12px; color:#9fd3b4;"></span>
+        </div>
+    </div>
+
+    <div id="panelLogin" class="tabPanel" style="display:none;">
+        <div style="margin-top:4px; margin-bottom:8px;">Log In with your UID:</div>
+        <input id="loginUidInput" placeholder="#ABC-123-DEF" style="width:200px; margin-bottom:8px;">
+        <div>
+            <button id="loginBtn">Log In</button>
+            <span class="generatedUidDisplay" aria-live="polite" role="status" style="display:block; margin-top:8px; font-size:12px; color:#9fd3b4;"></span>
+        </div>
+    </div>
+
+    <div id="panelBoard" class="tabPanel" style="display:block;">
+        <div class="panel-actions">
+            <div class="action-row">
+                <button id="submitScoreBtn" class="actionBtn">Submit Highest Score</button>
+                <button id="refreshBoardBtn" class="actionBtn secondary">Refresh Leaderboard</button>
+            </div>
+            <div class="action-row save-row">
+                <input id="saveAsInput" placeholder="Change Player ID" maxlength="9" inputmode="numeric" class="actionInput">
+                <button id="saveAsBtn" class="actionBtn positive">Confirm</button>
+            </div>
+        </div>
+        <h1 style="margin:12px 0 6px 0;">Highest Score Leaderboard</h1>
+        <div id="leaderboard" style="background:#fff; border-radius:8px; padding:10px; box-shadow:0 0 6px rgba(0,0,0,0.08); min-height:60px;"></div>
+    </div>
 </div>
+
+<style>
+/* Tab styles (retro) */
+.tabBtn { font-family:'Press Start 2P', monospace; background:linear-gradient(#9bd5ff,#ffb5b5); border:4px solid #222; box-shadow: 0 6px 0 #111; padding:8px 10px; font-size:11px; }
+.tabBtn.active { background: linear-gradient(#ffd47a,#ffb57a); box-shadow: 0 6px 0 #331100; color:#111; }
+.tabPanel { background: linear-gradient(#071118,#051019); padding:10px; border-radius:6px; border:3px solid #082326; color:#cfe7a8; }
+
+/* Panel action layout */
+.panel-actions { display:flex; flex-direction:column; gap:8px; align-items:center; margin-bottom:6px; }
+.panel-actions .action-row { display:flex; gap:8px; width:100%; justify-content:center; }
+.panel-actions .action-row.save-row { gap:6px; }
+.actionBtn { min-width:150px; padding:10px 12px; font-family:'Press Start 2P', monospace; font-size:11px; border:4px solid #222; box-shadow:0 6px 0 #111; background:linear-gradient(#9bd5ff,#ffb5b5); }
+.actionBtn.secondary { background:#333; color:#fff; box-shadow:0 6px 0 #111; }
+.actionBtn.positive { background:linear-gradient(#7bffb2,#4db87a); color:#042; }
+.actionInput { width:160px; padding:8px; border:3px solid #043; background:#000; color:#7fff9e; font-family:monospace; }
+
+
+
+/* Make actions stack on narrow screens */
+@media (max-width:420px) {
+    .panel-actions .action-row { flex-direction:column; gap:8px; }
+    .actionBtn { min-width:220px; }
+    .actionInput { width:80%; }
+}
+</style>
 <div style="margin-top:20px; font-size:12px; color:#666; text-align:center; max-width:340px;">
-Version 2.0.2<br>
+Version 2.5 <br>
 
 </body>
 
 <!-- Service worker registration (works on https or localhost) -->
 <script>
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('service-worker.js')
-            .then(reg => console.log('ServiceWorker registered', reg))
-            .catch(err => console.warn('ServiceWorker registration failed', err));
-    });
+  let refreshing = false;
+
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('service-worker.js')
+      .then(reg => reg.update());
+
+    navigator.serviceWorker.addEventListener(
+      'controllerchange',
+      () => {
+        if (refreshing) return;
+        refreshing = true;
+        location.reload();
+      }
+    );
+  });
 }
+
 </script>
 
 <script type="module" src="game.js"></script>

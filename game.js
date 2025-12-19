@@ -29,13 +29,243 @@ const userInput = document.getElementById("userInput");
 
 const gameContainer = document.getElementById("gameContainer");
 const leaderboardContainer = document.getElementById("leaderboardContainer");
-    // leaderboard UI elements
-    const playerNameInput = document.getElementById('playerName');
+    // leaderboard / auth UI elements
+    const playerNameInput = document.getElementById('playerName'); // 9-digit input for sign-up
+    const signUpBtn = document.getElementById('signUpBtn');
+    const generatedUidDisplay = document.querySelectorAll('.generatedUidDisplay');
+    const loginUidInput = document.getElementById('loginUidInput');
+    const loginBtn = document.getElementById('loginBtn');
     const submitScoreBtn = document.getElementById('submitScoreBtn');
     const refreshBoardBtn = document.getElementById('refreshBoardBtn');
     const leaderboardDiv = document.getElementById('leaderboard');
+    const saveAsInput = document.getElementById('saveAsInput');
+    const saveAsBtn = document.getElementById('saveAsBtn');
+
+    // Tab elements (Sign / Login / Leaderboard)
+    const tabSign = document.getElementById('tabSign');
+    const tabLogin = document.getElementById('tabLogin');
+    const tabBoard = document.getElementById('tabBoard');
+    const panelSign = document.getElementById('panelSign');
+    const panelLogin = document.getElementById('panelLogin');
+    const panelBoard = document.getElementById('panelBoard');
+
+    function activateTab(btn) {
+        [tabSign, tabLogin, tabBoard].forEach(b => { if (b) b.classList.remove('active'); });
+        if (btn) btn.classList.add('active');
+    }
+
+    // Simple device detection: Phone vs Computer
+    function detectDeviceLabel() {
+        const ua = navigator.userAgent || '';
+        const isMobile = /Mobi|Android|iPhone|iPad|Tablet/i.test(ua);
+        return isMobile ? 'Phone' : 'Computer';
+    }
+
+    function showPanel(panel) {
+        [panelSign, panelLogin, panelBoard].forEach(p => { if (p) p.style.display = 'none'; });
+        if (panel) panel.style.display = 'block';
+    }
+
+    // wire tab clicks
+    if (tabSign) tabSign.addEventListener('click', () => { activateTab(tabSign); showPanel(panelSign); });
+    if (tabLogin) tabLogin.addEventListener('click', () => { activateTab(tabLogin); showPanel(panelLogin); });
+    if (tabBoard) tabBoard.addEventListener('click', () => { activateTab(tabBoard); showPanel(panelBoard); });
+
+    // default view: leaderboard
+    activateTab(tabBoard);
+    showPanel(panelBoard);
+
+    // Save As: change 9-digit player ID for all docs with current UID
+    if (saveAsBtn) saveAsBtn.addEventListener('click', async () => {
+        const newId = saveAsInput ? String(saveAsInput.value || '').trim() : '';
+        if (!/^\d{9}$/.test(newId)) {
+            notify('Enter a valid 9-digit Player ID.', 'warn');
+            return;
+        }
+
+        const uid = localStorage.getItem('player_uid');
+        if (!uid) {
+            notify('No UID found on this device. Sign up or log in first.', 'warn');
+            return;
+        }
+
+        try {
+            const mod = await import('./firebaseinit.js');
+            const { db, collection, query, where, getDocs, doc, updateDoc, addDoc } = mod;
+
+            // find all docs for this uid
+            const q = query(collection(db, 'leaderboard'), where('uid', '==', uid));
+            const snap = await getDocs(q);
+
+            if (!snap.empty) {
+                const updates = [];
+                snap.forEach(d => {
+                    const ref = doc(db, 'leaderboard', d.id);
+                    updates.push(updateDoc(ref, { name: newId }));
+                });
+                await Promise.all(updates);
+                localStorage.setItem('player_9id', newId);
+                notify('Player ID updated for this device and server records.', 'success');
+                await fetchTopScores();
+                return;
+            }
+
+            // If no server docs, create one so leaderboard shows the new name
+            const currentScore = Number(localStorage.getItem('highestPoint')) || point || 0;
+            await addDoc(collection(db, 'leaderboard'), { uid: uid, name: newId, score: currentScore, ts: Date.now(), device: detectDeviceLabel() });
+            localStorage.setItem('player_9id', newId);
+            notify('No prior server records found — created new leaderboard entry with the new Player ID.', 'success');
+            await fetchTopScores();
+        } catch (err) {
+            console.error('Failed to change Player ID', err);
+            notify('Failed to save Player ID. See console.', 'error');
+        }
+    });
 
     console.log('Game init running');
+
+    // show stored UID if present
+    function updateStoredUidDisplay() {
+        const storedUid = localStorage.getItem('player_uid');
+        const stored9 = localStorage.getItem('player_9id');
+
+        if (generatedUidDisplay && generatedUidDisplay.length) {
+            if (storedUid) {
+                generatedUidDisplay.forEach(el => { el.textContent = 'Your UniqueID: ' + storedUid; });
+            } else {
+                generatedUidDisplay.forEach(el => { el.textContent = ''; });
+                
+            }
+        }
+
+        if (stored9 && playerNameInput) playerNameInput.value = stored9;
+    }
+    updateStoredUidDisplay();
+
+    // Sign-up handler: create UID and save to device + create initial DB doc
+    if (signUpBtn) signUpBtn.addEventListener('click', async () => {
+        const id9 = playerNameInput ? playerNameInput.value.trim() : '';
+        // if a UID already exists on this device, confirm before creating a new one
+        const existingUid = localStorage.getItem('player_uid');
+        if (existingUid) {
+            const confirmed = confirm('There is already a UID saved on this device (' + existingUid + ').\n\nDo you wish to create a new one anyway? Current one might be removed.');
+            if (!confirmed) return;
+        }
+        if (!/^\d{9}$/.test(id9)) {
+            notify('Enter a valid 9-digit Player ID to sign up.', 'warn');
+            return;
+        }
+        const uid = generatePlayerID();
+        try {
+            const mod = await import('./firebaseinit.js');
+            const { db, collection, addDoc } = mod;
+            await addDoc(collection(db, 'leaderboard'), {
+                uid: uid,
+                name: id9,
+                score: 0,
+                ts: Date.now(),
+                device: detectDeviceLabel()
+            });
+            localStorage.setItem('player_uid', uid);
+            localStorage.setItem('player_9id', id9);
+            localStorage.setItem('highestPoint', '0');
+            highestPoint = 0;
+            point = 0;
+            document.getElementById('bestScoreDisplay').textContent = 'Your Highest Score: ' + highestPoint;
+            updatePoint();
+            updateStoredUidDisplay();
+            // show the Sign Up panel and the UID immediately so the user can see it
+            activateTab(tabSign);
+            showPanel(panelSign);
+            if (generatedUidDisplay && generatedUidDisplay.length) generatedUidDisplay.forEach(el => { el.textContent = 'Your UniqueID: ' + uid; });
+            notify('Signed up! Your UID is saved to this device.', 'success');
+            await fetchTopScores();
+        } catch (err) {
+            console.error('Sign-up failed', err);
+            notify('Sign-up failed, see console.', 'error');
+        }
+    });
+
+    // Login handler: login by uid, save to device and sync score
+    async function performLogin(uidVal, { notifyUser = true, showPanelUI = false } = {}) {
+        if (!uidVal) return false;
+        if (!uidVal.startsWith('#')) uidVal = '#' + uidVal;
+        try {
+            const mod = await import('./firebaseinit.js');
+            const { db, collection, getDocs, query, where, updateDoc, doc, addDoc } = mod;
+            // fetch all docs for this uid so we can update device labels if needed
+            const qAll = query(collection(db, 'leaderboard'), where('uid', '==', uidVal));
+            const allSnap = await getDocs(qAll);
+            const deviceLabel = detectDeviceLabel();
+
+            if (allSnap.empty) {
+                // No records yet: create a placeholder so we capture device
+                const currentScore = Number(localStorage.getItem('highestPoint')) || 0;
+                await addDoc(collection(db, 'leaderboard'), { uid: uidVal, name: '', score: currentScore, ts: Date.now(), device: deviceLabel });
+                localStorage.setItem('player_uid', uidVal);
+                localStorage.setItem('player_9id', '');
+                localStorage.setItem('highestPoint', String(currentScore));
+                highestPoint = currentScore;
+                point = currentScore;
+                document.getElementById('bestScoreDisplay').textContent = 'Your Highest Score: ' + highestPoint;
+                updatePoint();
+                updateStoredUidDisplay();
+                if (showPanelUI) { activateTab(tabLogin); showPanel(panelLogin); }
+                if (generatedUidDisplay && generatedUidDisplay.length) generatedUidDisplay.forEach(el => { el.textContent = 'Logged in UID: ' + uidVal; });
+                if (notifyUser) notify('Logged in — new server record created and device saved.', 'success');
+                await fetchTopScores();
+                return true;
+            }
+
+            // If records exist, sync score from highest doc and update device label if needed
+            let bestScore = 0;
+            const updates = [];
+            allSnap.forEach(snapDoc => {
+                const dat = snapDoc.data();
+                if (dat && typeof dat.score === 'number' && dat.score > bestScore) bestScore = dat.score;
+                if (!dat || dat.device !== deviceLabel) {
+                    const ref = doc(db, 'leaderboard', snapDoc.id);
+                    updates.push(updateDoc(ref, { device: deviceLabel }));
+                }
+            });
+            if (updates.length) await Promise.all(updates);
+
+            const s = bestScore;
+            localStorage.setItem('player_uid', uidVal);
+            // use the highest-scoring doc's name if available
+            const nameFromDoc = allSnap.docs.find(d => (d.data() && typeof d.data().score === 'number' && d.data().score === bestScore)) || null;
+            const name = nameFromDoc ? (nameFromDoc.data().name || '') : '';
+            localStorage.setItem('player_9id', name);
+            localStorage.setItem('highestPoint', String(s));
+            highestPoint = s;
+            document.getElementById('bestScoreDisplay').textContent = 'Your Highest Score: ' + highestPoint;
+            updatePoint();
+            updateStoredUidDisplay();
+            if (showPanelUI) { activateTab(tabLogin); showPanel(panelLogin); }
+            if (generatedUidDisplay && generatedUidDisplay.length) generatedUidDisplay.forEach(el => { el.textContent = 'Logged in UID: ' + uidVal; });
+            if (notifyUser) notify('Logged in successfully. Score synced to device and device saved.', 'success');
+            return true;
+        } catch (err) {
+            console.error('Login failed', err);
+            if (notifyUser) notify('Login failed, see console.', 'error');
+            return false;
+        }
+    }
+
+    if (loginBtn) loginBtn.addEventListener('click', async () => {
+        const uidVal = loginUidInput ? loginUidInput.value.trim() : '';
+        if (!uidVal) { notify('Enter your UID to log in.', 'warn'); return; }
+        await performLogin(uidVal, { notifyUser: true, showPanelUI: true });
+    });
+
+    // Auto-login if a uid is stored locally
+    const autoUid = localStorage.getItem('player_uid');
+    if (autoUid) {
+        // don't show UI elements when auto-logging unless necessary; no notification by default
+        performLogin(autoUid, { notifyUser: false, showPanelUI: false }).then(success => {
+            if (success) fetchTopScores().catch(() => {});
+        });
+    }
 
 document.getElementById("startBtn").onclick = startGame;
 document.getElementById("quitBtn").onclick = resetGame;
@@ -225,7 +455,7 @@ async function submitScore(name, score) {
 
     try {
         const mod = await import('./firebaseinit.js');
-        const { db, collection, addDoc, getDocs, query, where, deleteDoc, doc } = mod;
+        const { db, collection, addDoc, getDocs, query, where, deleteDoc, doc, updateDoc } = mod;
 
         // find previous submissions by this uid
         const qPrev = query(collection(db, 'leaderboard'), where('uid', '==', uid));
@@ -237,6 +467,22 @@ async function submitScore(name, score) {
             const dat = d.data();
             if (prevHighest === null || (dat && typeof dat.score === 'number' && dat.score > prevHighest)) prevHighest = dat.score;
         });
+
+        // check device differences and update stored device labels if necessary
+        const currentDevice = detectDeviceLabel();
+        try {
+            const updates = [];
+            prevSnap.forEach(d => {
+                const dat = d.data();
+                if (!dat || dat.device !== currentDevice) {
+                    updates.push(updateDoc(doc(db, 'leaderboard', d.id), { device: currentDevice }));
+                }
+            });
+            if (updates.length) await Promise.all(updates);
+        } catch (devErr) {
+            // if updateDoc is not available or update fails, ignore but log
+            console.warn('Could not update device labels for previous docs', devErr);
+        }
 
         if (prevHighest !== null && score < prevHighest) {
             notify('Submit blocked — your new score is not higher than your previous submission (' + prevHighest + ').', 'warn');
@@ -270,12 +516,13 @@ async function submitScore(name, score) {
             }
         }
 
-        // submit new score document with uid and numeric player ID as name
+        // submit new score document with uid, numeric player ID as name, and device
         await addDoc(collection(db, 'leaderboard'), {
             uid: uid,
             name: name,
             score: score,
-            ts: Date.now()
+            ts: Date.now(),
+            device: detectDeviceLabel()
         });
 
         notify('Score submitted!', 'success');
@@ -285,6 +532,7 @@ async function submitScore(name, score) {
         notify('Failed to submit score. See console.', 'error');
     }
 }
+
 
 async function fetchTopScores() {
     if (!leaderboardDiv) return;
@@ -298,10 +546,25 @@ async function fetchTopScores() {
             leaderboardDiv.innerHTML = '<div>No scores yet</div>';
             return;
         }
-        let html = '<ol style="text-align:left; margin:0; padding-left:18px;">';
+        let html = '<ol style="text-align:left; margin:0; padding-left:18px;font-size:16px;">';
         snap.forEach(docSnap => {
             const d = docSnap.data();
-            html += `<li>${escapeHtml(d.name||'Anonymous')} — ${d.score}</li>`;
+            // display player ID with uid appended for disambiguation, but don't modify stored data
+            const baseName = d.name || 'Anonymous';
+                        let uidHtml = '';
+                     if (typeof d.uid === "string" && d.uid.length > 0) {
+                            const shortUid = d.uid.slice(0, 4);
+
+                            // uid zaten baseName içinde varsa tekrar ekleme
+                            if (!String(baseName).includes(shortUid)) {
+                                uidHtml = ` <span class="uid">${escapeHtml(shortUid)}***</span>`;
+                            }
+                     }
+                     const deviceText = d.device ? `<span class="device">${escapeHtml(d.device)}</span> ` : '';
+                     const scoreText = d.score ? '<span class="score">' + d.score + ' POINTS</span>' : '0 POINTS';
+
+                 html += `<li> ${escapeHtml(baseName)}${uidHtml} — ${deviceText} — ${scoreText}   </li>`;  
+
         });
         html += '</ol>';
         leaderboardDiv.innerHTML = html;
@@ -318,8 +581,11 @@ function escapeHtml(s) {
 
 // wire leaderboard buttons
 if (submitScoreBtn) submitScoreBtn.addEventListener('click', () => {
-    const name = playerNameInput ? playerNameInput.value.trim() : 'Anonymous';
-    submitScore(name, highestPoint);
+    // prefer saved 9-digit ID, otherwise use the input value
+    const saved9 = localStorage.getItem('player_9id');
+    const name = saved9 || (playerNameInput ? playerNameInput.value.trim() : '');
+    // submit current points for this player
+    submitScore(name, point);
 });
 if (refreshBoardBtn) refreshBoardBtn.addEventListener('click', fetchTopScores);
 

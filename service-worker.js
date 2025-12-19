@@ -1,5 +1,5 @@
 // serviceWorker.js
-const CACHE_NAME = "2.0.2";
+const CACHE_NAME = "V2.5";
 const CACHE_ASSETS = [
   "./",
   "./game.js",
@@ -38,9 +38,19 @@ self.addEventListener("activate", (e) => {
 // Fetch
 self.addEventListener("fetch", (e) => {
   e.respondWith(
-    caches.match(e.request).then((response) => {
-      return response || fetch(e.request);
-    })
+    fetch(e.request)
+      .then((response) => {
+        // başarılıysa cache’i güncelle
+        const responseClone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(e.request, responseClone);
+        });
+        return response;
+      })
+      .catch(() => {
+        // offline ise cache'ten ver
+        return caches.match(e.request);
+      })
   );
 });
 
