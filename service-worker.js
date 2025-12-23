@@ -1,12 +1,13 @@
 // serviceWorker.js
-const CACHE_NAME = "V2.7";
+const CACHE_NAME = "V2.9";
 const CACHE_ASSETS = [
   "./",
   "./game.js",
   "./firebaseinit.js",
   "./service-worker.js",
   "./manifest.json",
-  "./images/icon1.png"
+  "./images/main_icon.png",
+  "./images/pageQR.svg",
 ];
 
 // Kurulum (Install)

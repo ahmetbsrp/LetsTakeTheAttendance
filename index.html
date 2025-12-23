@@ -166,24 +166,8 @@ button:active{ transform:translateY(3px); box-shadow:0 3px 0 #111 inset; }
 
 input{ background:#000; color:#7fff9e; border:3px solid #043; padding:10px; font-family:monospace; }
 
-#leaderboard{ font-family:monospace; background:linear-gradient(#071118,#051019); color:#e01d54; border:3px solid #082326; }
 
-/* UID visual style in leaderboard */
-#leaderboard li .uid { color: #965478; opacity: 0.9; margin-left:6px; font-size:0.65em;font-family:'Press Start 2P', monospace; }
-/* Device label in leaderboard */
-#leaderboard li .device { color: #965478; opacity: 0.95; margin-right:6px; font-size:0.65em; font-family:'Press Start 2P', monospace;}
 
-#leaderboard li .score {
-    color: #000000;
-    font-weight: 100;
-    font-family: 'Press Start 2P', monospace;
-    background:transparent;
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 12px;
-    display: inline-block;
-    margin-left: -12px;
-}
 /*chane "highestscoreleaderboard" title color*/
 #leaderboardContainer h1 { color: #f57b3a; text-shadow: 0 0 8px rgba(129, 171, 255, 0.2);font-size: 18px; }
 
@@ -240,8 +224,7 @@ body { transform: none; }
 <h1>ATTENDANCERS</h1>
 
 <style>
-/* Additional responsive tweaks for small screens */
-#leaderboardContainer { width: min(94vw, 360px); }
+
 @media (max-width: 420px) {
     h1 { font-size: 24px; }
     body { margin-top: 12px; }
@@ -365,8 +348,8 @@ body { transform: none; }
     <img 
         src="./images/pageQR.svg"
         alt="Page QR Code"
-        max-width="100%"
-        height="auto"
+        width="200"
+        height="200"
         style="border:1px solid #222; background:#fff;"
     >
    </div>
@@ -398,7 +381,7 @@ body { transform: none; }
 }
 </style>
 <div style="margin-top:20px; font-size:12px; color:#666; text-align:center; max-width:340px;">
-Version 2.8 <br>
+Version 2.9 <br>
 
 </body>
 

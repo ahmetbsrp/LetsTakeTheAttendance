@@ -12,6 +12,7 @@ function init() {
     let countForDigit = 0; // how many times current digit length has been asked
     let timer;
     let countSpeed = 100; // initial timer speed in ms
+    let currentStage = getStage(highestPoint);
 
     const BASE_SPEED = 100;
     const SPEED_DECAY = 0.9;
@@ -146,7 +147,7 @@ function init() {
     // ==========================================
 
     function UpdateStartButton() {
-        let currentStage = getStage(highestPoint);
+      currentStage = getStage(highestPoint);
         if (currentStage >= 1) {
             document.getElementById('startBtn').textContent = 'Continue Stage ' + currentStage + ' ▶';
             document.getElementById('startBtn').style.background = 'linear-gradient(180deg, #8903b5ff, #fa59d4ff)';
@@ -330,33 +331,181 @@ function init() {
     async function fetchTopScores() {
         if (!leaderboardDiv) return;
         leaderboardDiv.textContent = 'Loading...';
+        
         try {
             const mod = await import('./firebaseinit.js');
             const { db, collection, getDocs, query, orderBy, limit } = mod;
             const q = query(collection(db, 'leaderboard'), orderBy('score', 'desc'), limit(10));
             const snap = await getDocs(q);
+            
             if (snap.empty) {
-                leaderboardDiv.innerHTML = '<div>No scores yet</div>';
+                leaderboardDiv.innerHTML = '<div style="padding:20px; text-align:center">No scores yet</div>';
                 return;
             }
-            let html = '<ol style="text-align:left; margin:0; padding-left:28px;font-size:12px;font-family: \'Press Start 2P\', monospace;">';
+
+            // 1. Define internal CSS for the boxes
+            let html = `
+            <style>
+                ol.custom-lb { 
+                    list-style: none; 
+                    padding: 0; 
+                    margin: 0; 
+                }
+                
+              
+                li.lb-row {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    background: rgba(255, 255, 255, 0.05); /* Slight transparent background */
+                    margin-bottom: 8px;
+                    padding: 10px;
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    border-radius: 6px;
+                    font-family: 'Press Start 2P', monospace;
+                    font-size: 10px; /* Smaller font to fit boxes */
+                }
+
+                .lb-rank {
+                    width: 25px;
+                    font-size: 14px;
+                    color: #000000ff;
+                    font-weight: bold;
+                    margin-right: 10px;
+                    text-align: center;
+                   
+                }
+
+                /* Left side: Name and UID */
+                .lb-player {
+                    display: flex;
+                    flex-direction: column;
+                    flex: 1; /* Takes available space */
+                }
+                .lb-name {
+                    font-size: 12px;
+                    color: #000000ff;
+                    margin-bottom: 4px;
+                    text-align: left;
+                }
+                .lb-uid {
+                    font-size: 10px;
+                    color: #aaa;
+                    background: #222;
+                    padding: 2px 4px;
+                    border-radius: 3px;
+                    width: fit-content;
+                }
+
+                /* Right side: Device and Score */
+                .lb-stats {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: flex-end; /* Align to right */
+                    gap: 4px;
+                }
+                .lb-device {
+                    font-size: 8px;
+                    text-transform: uppercase;
+                    background: #444;
+                    color: #ddd;
+                    padding: 2px 5px;
+                    border-radius: 3px;
+                }
+                .lb-score {
+                    font-size: 12px;
+                    color: #4CAF50; 
+                    font-weight: bold;
+                    border: 1px solid #4CAF50;
+                    padding: 3px 6px;
+                    border-radius: 4px;
+                    background: rgba(76, 175, 80, 0.1);
+                }
+
+                /* Rank 1: Gold */
+                ol.custom-lb li:nth-child(1) .lb-rank {
+                    color: #FFD700;
+                     text-shadow: 
+        -1px -1px 0 #806600,  
+         1px -1px 0 #806600,
+        -1px  1px 0 #806600,
+         1px  1px 0 #806600;
+                 
+                }
+
+                /* Rank 2: Silver */
+                ol.custom-lb li:nth-child(2) .lb-rank {
+                    color: #C0C0C0;
+                         text-shadow: 
+        -1px -1px 0 #555555,  
+         1px -1px 0 #555555,
+        -1px  1px 0 #555555,
+         1px  1px 0 #555555;
+                 
+                
+                  
+                }
+
+                /* Rank 3: Bronze */
+                ol.custom-lb li:nth-child(3) .lb-rank {
+                    color: #CD7F32;
+                                            text-shadow: 
+        -1px -1px 0 #593001,  
+         1px -1px 0 #593001,
+        -1px  1px 0 #593001,
+         1px  1px 0 #593001;
+                 
+                }
+            </style>
+            <ol class="custom-lb">`;
+
+            let rank = 1;
+
             snap.forEach(docSnap => {
                 const d = docSnap.data();
                 const baseName = d.name || 'Anonymous';
+                
+                // --- Prepare UID Box ---
                 let uidHtml = '';
                 if (typeof d.uid === "string" && d.uid.length > 0) {
                     const shortUid = d.uid.slice(0, 4);
-                    // Prevent duplicate UID display
+                    // Only show UID if it's not already in the name
                     if (!String(baseName).includes(shortUid)) {
-                        uidHtml = ` <span class="uid">${escapeHtml(shortUid)}***</span>`;
+                        uidHtml = `<span class="lb-uid">ID: ${escapeHtml(shortUid)}***</span>`;
                     }
                 }
-                const deviceText = d.device ? `<span class="device">${escapeHtml(d.device)}</span> ` : '';
-                const scoreText = d.score ? '<span class="score">' + d.score + ' POINTS</span>' : '0 POINTS';
-                html += `<li> ${escapeHtml(baseName)}${uidHtml} ${deviceText} ${scoreText} </li>`;
+
+                // --- Prepare Device Box ---
+                // If no device, we render nothing, or you could render "UNKNOWN"
+                const deviceHtml = d.device 
+                    ? `<span class="lb-device">${escapeHtml(d.device)}</span>` 
+                    : '';
+
+                // --- Prepare Score Box ---
+                const scoreVal = d.score !== undefined ? d.score : 0;
+                
+                // --- HTML Construction ---
+                html += `
+                <li class="lb-row">
+                    <span class="lb-rank">#${rank}</span>
+                    
+                    <div class="lb-player">
+                        <span class="lb-name">${escapeHtml(baseName)}</span>
+                        ${uidHtml}
+                    </div>
+
+                    <div class="lb-stats">
+                        ${deviceHtml}
+                        <span class="lb-score">${scoreVal} PTS</span>
+                    </div>
+                </li>`;
+                
+                rank++;
             });
+
             html += '</ol>';
             leaderboardDiv.innerHTML = html;
+
         } catch (err) {
             console.error('Failed to fetch leaderboard', err);
             leaderboardDiv.textContent = 'Error loading leaderboard';
